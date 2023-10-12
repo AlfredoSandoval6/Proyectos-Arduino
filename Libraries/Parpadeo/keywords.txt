@@ -1,0 +1,2 @@
+Parpadeo	KEYWORD1
+light	KEYWORD2

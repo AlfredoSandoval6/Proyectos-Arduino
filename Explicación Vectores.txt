@@ -1,0 +1,39 @@
+Vector[5]
+
+0 1 2 3 4
+
+Vector[5][5]
+
+0 1 2 3 4 
+1 . . . .
+2 . . . .
+3 . . . .
+4 . . . .
+
+
+Vector[i]
+
+Vector = libro
+
+i = número de página
+
+----
+
+
+Vector[600];
+
+i = 500
+
+Vector[i]
+
+Abre en la página 500 del libro Vector, que tiene 600 en total
+
+----
+
+for(int i = 0; i < 500; i++){
+
+	Vector[i];
+
+}
+
+Moverte de una a una página, desde la página 0 hasta antes de la 500
