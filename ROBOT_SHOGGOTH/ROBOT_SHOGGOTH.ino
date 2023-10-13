@@ -44,7 +44,8 @@ byte sensores; //0B00000000
 byte i, j, k;
 
 ////PROTOTIPO DE FUNCIONES
-void espera(bool caso, int interruptor, int entrada, int T); //MÉTODO DE DELAY CON INTERRUPCIÓN
+void secuenciaLeds(); //SECUENCIA DE LEDS POR ESTRATEGIA CON INTERRUPCIÓN DE ACTIVADOR
+void espera(int T); //MÉTODO DE DELAY CON INTERRUPCIÓN DE ACTIVADOR Y SENSORES
 void lectura(); //LECTURA DE SENSORES
 void rutina(); //ESTRATEGIA A UTILIZAR EN EL ARRANQUE, Y LUEGO BUSCAR AL CONTRINCANTE
 void posAnalisis(); //ANALISAR LA POSICIÓN DEL CONTRINCANTE PARA SABER CÓMO Y A DÓNDE MOVERSE
@@ -84,52 +85,53 @@ void setup() {
 
 void loop() {
 
-  i = digitalRead(estrategia[0]);
-  j = digitalRead(estrategia[1]);
-
-  if((i == LOW) && (j == LOW)){
-    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
-    espera(true, HIGH, ACTIVADOR, 500);
-    digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
-    espera(true, HIGH, ACTIVADOR, 500);
-    sgy = 0B00000001;
-  } else if((i == LOW) && (j == HIGH)){
-    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], LOW);
-    espera(true, HIGH, ACTIVADOR, 400);
-    digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], HIGH);
-    espera(true, HIGH, ACTIVADOR, 400);
-    sgy = 0B00000010;
-  } else if((i == HIGH) && (j == LOW)){
-    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], LOW);
-    espera(true, HIGH, ACTIVADOR, 300);
-    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
-    espera(true, HIGH, ACTIVADOR, 300);
-    digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
-    espera(true, HIGH, ACTIVADOR, 300);
-    sgy = 0B00000100;
-  } else if((i == HIGH) && (j == HIGH)){
-    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
-    espera(true, HIGH, ACTIVADOR, 250);
-    digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
-    espera(true, HIGH, ACTIVADOR, 250);
-    sgy = 0B00001000;
-  }
+  do{
+    secuenciaLeds();
+  }while(LECT_ACT == LOW);
 
   delay(1);
   if(LECT_ACT == HIGH){i = j = 0; rutina();}
 
 }
 
-void espera(bool caso, int interruptor, int entrada, int T){
-  switch(caso){
-  case true:
-    for(int l = 0; l <= T; ++l){delay(1); if(digitalRead(entrada) == interruptor) return;};
-    break;
-  case false:
-    for(int l = 0; l <= T; ++l){delay(1); if(digitalRead(entrada) != interruptor) return;};
-    break;
-  default:
-    break;
+void secuenciaLeds(){
+
+  i = digitalRead(estrategia[0]);
+  j = digitalRead(estrategia[1]);
+
+  if((i == LOW) && (j == LOW)){
+    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
+    for(int l = 0; l <= 500; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
+    for(int l = 0; l <= 500; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    sgy = 0B00000001;
+  } else if((i == LOW) && (j == HIGH)){
+    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], LOW);
+    for(int l = 0; l <= 400; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], HIGH);
+    for(int l = 0; l <= 400; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    sgy = 0B00000010;
+  } else if((i == HIGH) && (j == LOW)){
+    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], LOW);
+    for(int l = 0; l <= 300; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
+    for(int l = 0; l <= 300; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
+    for(int l = 0; l <= 300; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    sgy = 0B00000100;
+  } else if((i == HIGH) && (j == HIGH)){
+    digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
+    for(int l = 0; l <= 250; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
+    for(int l = 0; l <= 250; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    sgy = 0B00001000;
+  }
+
+}
+
+void espera(int T){
+  for(int l = 0; l<= T; ++l){
+    lectura(); delay(1); if(LECT_ACT == LOW) return; if(sensores != 0) return;
   }
 }
 
@@ -142,6 +144,9 @@ void lectura(){
   if(DG_R > RAN_SEN){sensores |= (1 << 4);} else{sensores &= ~ (1 << 4);}*/
   if(P_L < RAN_SEN_P){sensores |= (1 << 5);} else{sensores &= ~ (1 << 5);}
   if(P_R < RAN_SEN_P){sensores |= (1 << 6);} else{sensores &= ~ (1 << 6);}
+
+  if(bitRead(sensores, 0) && !bitRead(sensores, 4)) izq = true;
+  else if(!bitRead(sensores, 0) && bitRead(sensores, 4)) der = true;
 
 }
 
@@ -198,7 +203,7 @@ void posAnalisis(){
     }
 
     paro(1);
-    espera(false, 0, sensores, 249);
+    espera(249);
 
   } else{/*
 
@@ -270,11 +275,26 @@ void posAnalisis(){
 }
 
 void busqueda(){
-  do{
-    adelante(24, 30, 2);
-    lectura();
-    if(LECT_ACT == LOW){paro(1); break;}
-  }while(sensores == 0);
+  if(izq || der){
+    if(izq){
+    digitalWrite(DIRL, LOW); analogWrite(PWML, 240);
+    digitalWrite(DIRR, HIGH); analogWrite(PWMR, 240);
+    espera(120);
+    }
+    if(der){
+    digitalWrite(DIRL, HIGH); analogWrite(PWML, 240);
+    digitalWrite(DIRR, LOW); analogWrite(PWMR, 240);
+    espera(120);
+    }
+    izq = der = false;
+  }
+  if(sensores == 0){
+    do{
+      adelante(24, 30, 2);
+      lectura();
+      if(LECT_ACT == LOW){paro(1); break;}
+    }while(sensores == 0);
+  }
 }
 
 void attack(){
