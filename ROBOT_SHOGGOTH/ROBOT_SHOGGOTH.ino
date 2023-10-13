@@ -31,7 +31,7 @@
 #define DG_R analogRead(SEN_D_R) //DIAGONAL DERCHO*/
 #define P_L analogRead(SEN_P_L) //PISO IZQUIERDO
 #define P_R analogRead(SEN_P_R) //PISO DERECHO
-#define LECT_ACT digitalRead(ACTIVADOR) //LECTURA DEL ACTIVADOR
+#define LECT_ACT(state) (digitalRead(ACTIVADOR) == (state)) //LECTURA DEL ACTIVADOR, DA 0 O 1 ACUERDO AL ESTADO
 int estrategia[2] = {2, 7}; //PINES DE ESTRATEGIA
 int sgy_leds[2] = {0, 1}; //PINES DE LEDS DE ESTRATEGIA
 int der = false, izq = false; //ÚLTIMA POSICIÓN REGISTRADA, DE IZQUIERDA A (Ó) DERECHA
@@ -45,7 +45,7 @@ byte i, j, k;
 
 ////PROTOTIPO DE FUNCIONES
 void secuenciaLeds(); //SECUENCIA DE LEDS POR ESTRATEGIA CON INTERRUPCIÓN DE ACTIVADOR
-void espera(int T); //MÉTODO DE DELAY CON INTERRUPCIÓN DE ACTIVADOR Y SENSORES
+void espera(bool caso, int T); //MÉTODO DE DELAY CON INTERRUPCIÓN DE ACTIVADOR Y/O SENSORES
 void lectura(); //LECTURA DE SENSORES
 void rutina(); //ESTRATEGIA A UTILIZAR EN EL ARRANQUE, Y LUEGO BUSCAR AL CONTRINCANTE
 void posAnalisis(); //ANALISAR LA POSICIÓN DEL CONTRINCANTE PARA SABER CÓMO Y A DÓNDE MOVERSE
@@ -87,10 +87,10 @@ void loop() {
 
   do{
     secuenciaLeds();
-  }while(LECT_ACT == LOW);
+  }while(LECT_ACT(LOW));
 
   delay(1);
-  if(LECT_ACT == HIGH){i = j = 0; rutina();}
+  if(LECT_ACT(HIGH)){i = j = 0; rutina();}
 
 }
 
@@ -101,37 +101,50 @@ void secuenciaLeds(){
 
   if((i == LOW) && (j == LOW)){
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
-    for(int l = 0; l <= 500; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    for(int l = 0; l <= 500; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 500; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    for(int l = 0; l <= 500; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
     sgy = 0B00000001;
   } else if((i == LOW) && (j == HIGH)){
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 400; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    for(int l = 0; l <= 400; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], HIGH);
-    for(int l = 0; l <= 400; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    for(int l = 0; l <= 400; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
     sgy = 0B00000010;
   } else if((i == HIGH) && (j == LOW)){
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 300; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    for(int l = 0; l <= 300; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
-    for(int l = 0; l <= 300; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    for(int l = 0; l <= 300; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 300; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    for(int l = 0; l <= 300; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
     sgy = 0B00000100;
   } else if((i == HIGH) && (j == HIGH)){
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
-    for(int l = 0; l <= 250; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    for(int l = 0; l <= 250; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 250; ++l){if(LECT_ACT == HIGH) return; delay(1);}
+    for(int l = 0; l <= 250; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
     sgy = 0B00001000;
   }
 
 }
 
-void espera(int T){
-  for(int l = 0; l<= T; ++l){
-    lectura(); delay(1); if(LECT_ACT == LOW) return; if(sensores != 0) return;
+void espera(bool caso, int T){
+  switch(caso){
+    case true:
+      for(int l = 0; l<= T; ++l){
+        if(LECT_ACT(LOW)){paro(1); return;} delay(1);
+      }
+    break;
+
+    case false:
+      for(int l = 0; l<= T; ++l){
+        lectura(); if(LECT_ACT(LOW)){paro(1); return;} if(sensores != 0) return; delay(1);
+      }
+    break;
+
+    default:
+    break;
   }
 }
 
@@ -156,7 +169,7 @@ void rutina(){
   case 0B00000001: //GIRO DERECHA A 90°
     derecha(240, 240, 60);
     break;
-  
+
   case 0B00000010: //GIRO DERECHA A 180°
     derecha(240, 237, 120);
     break;
@@ -175,7 +188,7 @@ void rutina(){
 
   do{
     posAnalisis();
-  }while(LECT_ACT == HIGH);
+  }while(LECT_ACT(HIGH));
 
 }
 
@@ -184,7 +197,7 @@ void posAnalisis(){
   lectura();
 
   if(sensores == 0) busqueda();
-  if(LECT_ACT == LOW) return;
+  if(LECT_ACT(LOW)) return;
 
   if(bitRead(sensores, 5) || bitRead(sensores, 6)){
 
@@ -203,7 +216,7 @@ void posAnalisis(){
     }
 
     paro(1);
-    espera(249);
+    espera(false, 249);
 
   } else{/*
 
@@ -276,23 +289,24 @@ void posAnalisis(){
 
 void busqueda(){
   if(izq || der){
+    if(LECT_ACT(LOW)) return;
     if(izq){
     digitalWrite(DIRL, LOW); analogWrite(PWML, 240);
     digitalWrite(DIRR, HIGH); analogWrite(PWMR, 240);
-    espera(120);
+    espera(false, 120);
     }
     if(der){
     digitalWrite(DIRL, HIGH); analogWrite(PWML, 240);
     digitalWrite(DIRR, LOW); analogWrite(PWMR, 240);
-    espera(120);
+    espera(false, 120);
     }
     izq = der = false;
   }
   if(sensores == 0){
     do{
+      if(LECT_ACT(LOW)) break;
       adelante(24, 30, 2);
       lectura();
-      if(LECT_ACT == LOW){paro(1); break;}
     }while(sensores == 0);
   }
 }
@@ -347,7 +361,7 @@ void izquierda(int PWMI, int PWMD, int T){
   analogWrite(PWML, PWMI);
   digitalWrite(DIRR, HIGH);
   analogWrite(PWMR, PWMD);
-  delay(T);
+  espera(true, T);
   
 }
 
@@ -357,7 +371,7 @@ void derecha(int PWMI, int PWMD, int T){
   analogWrite(PWML, PWMI);
   digitalWrite(DIRR, LOW);
   analogWrite(PWMR, PWMD);
-  delay(T);
+  espera(true, T);
   
 }
 
@@ -367,7 +381,7 @@ void adelante(int PWMI, int PWMD, int T){
   analogWrite(PWML, PWMI);
   digitalWrite(DIRR, HIGH);
   analogWrite(PWMR, PWMD);
-  delay(T);
+  espera(true, T);
 
 }
 
@@ -377,6 +391,6 @@ void atras(int T){
   analogWrite(PWML, 255);
   digitalWrite(DIRR, LOW);
   analogWrite(PWMR, 255);
-  delay(T);
+  espera(true, T);
   
 }
