@@ -34,7 +34,7 @@
 #define LECT_ACT(state) (digitalRead(ACTIVADOR) == (state)) //LECTURA DEL ACTIVADOR, DA 0 O 1 ACUERDO AL ESTADO
 int estrategia[2] = {2, 7}; //PINES DE ESTRATEGIA
 int sgy_leds[2] = {0, 1}; //PINES DE LEDS DE ESTRATEGIA
-int der = false, izq = false; //ÚLTIMA POSICIÓN REGISTRADA, DE IZQUIERDA A (Ó) DERECHA
+int der = false, izq = false; //ÚLTIMA POSICIÓN REGISTRADA, DE IZQUIERDA Ó DERECHA
 byte sgy; //ALMACENAMIENTO DE LA ESTRATEGIA SELECCIONADA
 
 //LECTURA DE SENSORES
@@ -130,21 +130,14 @@ void secuenciaLeds(){
 }
 
 void espera(bool caso, int T){
-  switch(caso){
-    case true:
-      for(int l = 0; l<= T; ++l){
-        if(LECT_ACT(LOW)){paro(1); return;} delay(1);
-      }
-    break;
-
-    case false:
-      for(int l = 0; l<= T; ++l){
-        lectura(); if(LECT_ACT(LOW)){paro(1); return;} if(sensores != 0) return; delay(1);
-      }
-    break;
-
-    default:
-    break;
+  if(caso){
+    for(int l = 0; l<= T; ++l){
+      if(LECT_ACT(LOW)){paro(1); return;} delay(1);
+    }
+  } else{
+    for(int l = 0; l<= T; ++l){
+      lectura(); if(LECT_ACT(LOW)){paro(1); return;} if(sensores != 0) return; delay(1);
+    }
   }
 }
 
@@ -166,23 +159,23 @@ void lectura(){
 void rutina(){
 
   switch (sgy){
-  case 0B00000001: //GIRO DERECHA A 90°
-    derecha(240, 240, 60);
+    case 0B00000001: //GIRO DERECHA A 90°
+      derecha(240, 240, 60);
     break;
 
-  case 0B00000010: //GIRO DERECHA A 180°
-    derecha(240, 237, 120);
+    case 0B00000010: //GIRO DERECHA A 180°
+      derecha(240, 237, 120);
     break;
 
-  case 0B00000100: //GIRO IZQUIERDA A 90°
-    izquierda(240, 240, 60);
+    case 0B00000100: //GIRO IZQUIERDA A 90°
+      izquierda(240, 240, 60);
     break;
 
-  case 0B00001000: //SIN RUTINA, EMPEZAR BÚSQUEDA
-    adelante(240, 240, 60);
+    case 0B00001000: //SIN RUTINA, EMPEZAR BÚSQUEDA
+      adelante(240, 240, 60);
     break;
 
-  default:
+    default:
     break;
   }
 
@@ -323,19 +316,19 @@ void attack(){
       
       case 0B00001110:
         adelante(250, 250, 50);
-        break;
+      break;
 
       case 0B00000100:
         adelante(250, 250, 50);
-        break;
+      break;
 
       case 0B00011111:
         adelante(250, 250, 50);
-        break;
+      break;
 
       default:
         j = 1;
-        break;
+      break;
 
     }
 
