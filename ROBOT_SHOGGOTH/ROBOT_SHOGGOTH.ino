@@ -3,8 +3,6 @@
 ////CONSTANTES
 #define RAN_SEN 250 //RANGO DE LOS SENSORES FRONTALES
 #define RAN_SEN_P 880 //RANGO DE LOS SENSORES DE PISO
-#define NUM_SEN 5 //NÚMERO DE SENSORES FRONTALES
-#define NUM_SEN_P 2 //NÚMERO DE SENSORES DE PISO
 
 ////ENTRADAS
 /*#define SEN_L_L A0 //SENSOR LATERAL IZQUIERDO - ENTRADA A0
@@ -52,9 +50,9 @@ void posAnalisis(); //ANALISAR LA POSICIÓN DEL CONTRINCANTE PARA SABER CÓMO Y 
 void busqueda(); //BÚSQUEDA DEL CONTRINCANTE SI NO SE DETECTA EN LOS SENSORES FRONTALES
 void attack(); //MÉTODO DE ATAQUE CUANDO SE TENGA AL CONTRINCANTE EN LOS SENSORES FRONTALES
 void paro(int T); //FUNCIÓN (MÉTODO) PARA EL PARO
-void izquierda(int PWMI, int PWMD, int T); //GIRO A LA IZQUIERDA
-void derecha(int PWMI, int PWMD, int T); //GIRO A LA DERECHA
-void adelante(int PWMI, int PWMD, int T); //AVANZAR HACIA ADELANTE
+void izquierda(byte PWMI, byte PWMD, int T); //GIRO A LA IZQUIERDA
+void derecha(byte PWMI, byte PWMD, int T); //GIRO A LA DERECHA
+void adelante(byte PWMI, byte PWMD, int T); //AVANZAR HACIA ADELANTE
 void atras(int T); //RETROCESO
 
 void setup() {
@@ -89,7 +87,7 @@ void loop() {
     secuenciaLeds();
   }while(LECT_ACT(LOW));
 
-  delay(1);
+  delay(500);
   if(LECT_ACT(HIGH)){i = j = 0; rutina();}
 
 }
@@ -131,11 +129,11 @@ void secuenciaLeds(){
 
 void espera(bool caso, int T){
   if(caso){
-    for(int l = 0; l<= T; ++l){
+    for(int l = 0; l <= T; ++l){
       if(LECT_ACT(LOW)){paro(1); return;} delay(1);
     }
   } else{
-    for(int l = 0; l<= T; ++l){
+    for(int l = 0; l <= T; ++l){
       lectura(); if(LECT_ACT(LOW)){paro(1); return;} if(sensores != 0) return; delay(1);
     }
   }
@@ -153,12 +151,13 @@ void lectura(){
 
   if(bitRead(sensores, 0) && !bitRead(sensores, 4)) izq = true;
   else if(!bitRead(sensores, 0) && bitRead(sensores, 4)) der = true;
+  else if(bitRead(sensores, 0) && bitRead(sensores, 4)) izq = false;
 
 }
 
 void rutina(){
 
-  switch (sgy){
+  switch(sgy){
     case 0B00000001: //GIRO DERECHA A 90°
       derecha(240, 240, 60);
     break;
@@ -255,25 +254,25 @@ void posAnalisis(){
       } else if(bitRead(sensores, 3)){derecha(); return;} else{adelante(); attack(); return;}
     }
 
-    switch (sensores){
-    
+    switch(sensores){
+
     case 0B00001110:
       adelante(250, 250, 50);
       attack();
-      break;
-    
+    break;
+
     case 0B00011111:
       adelante(250, 250, 50);
       attack();
-      break;
+    break;
 
     case 0B00000100:
       adelante(250, 250, 50);
       attack();
-      break;
-    
+    break;
+
     default:
-      break;
+    break;
     }*/
 
   }
@@ -295,12 +294,11 @@ void busqueda(){
     }
     izq = der = false;
   }
-  if(sensores == 0){
-    do{
-      if(LECT_ACT(LOW)) break;
-      adelante(24, 30, 2);
-      lectura();
-    }while(sensores == 0);
+  lectura();
+  while(sensores == 0){
+    if(LECT_ACT(LOW)) break;
+    adelante(24, 30, 2);
+    lectura();
   }
 }
 
@@ -348,7 +346,7 @@ void paro(int T){
 
 }
 
-void izquierda(int PWMI, int PWMD, int T){
+void izquierda(byte PWMI, byte PWMD, int T){
 
   digitalWrite(DIRL, LOW);
   analogWrite(PWML, PWMI);
@@ -358,7 +356,7 @@ void izquierda(int PWMI, int PWMD, int T){
   
 }
 
-void derecha(int PWMI, int PWMD, int T){
+void derecha(byte PWMI, byte PWMD, int T){
 
   digitalWrite(DIRL, HIGH);
   analogWrite(PWML, PWMI);
@@ -368,7 +366,7 @@ void derecha(int PWMI, int PWMD, int T){
   
 }
 
-void adelante(int PWMI, int PWMD, int T){
+void adelante(byte PWMI, byte PWMD, int T){
 
   digitalWrite(DIRL, HIGH);
   analogWrite(PWML, PWMI);
