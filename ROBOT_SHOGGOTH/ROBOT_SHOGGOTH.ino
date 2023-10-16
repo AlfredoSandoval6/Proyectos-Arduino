@@ -151,7 +151,7 @@ void lectura(){
 
   if(bitRead(sensores, 0) && !bitRead(sensores, 4)) izq = true;
   else if(!bitRead(sensores, 0) && bitRead(sensores, 4)) der = true;
-  else if(bitRead(sensores, 0) && bitRead(sensores, 4)) izq = false;
+  else if(bitRead(sensores, 0) && bitRead(sensores, 4)) izq = true;
 
 }
 
@@ -238,11 +238,11 @@ void posAnalisis(){
 
       case 0B00000010:
         izquierda(); return;
-        break;
+      break;
 
       case 0B00001000:
         derecha(); return;
-        break;
+      break;
 
     }
 
@@ -256,23 +256,23 @@ void posAnalisis(){
 
     switch(sensores){
 
-    case 0B00001110:
-      adelante(250, 250, 50);
-      attack();
-    break;
+      case 0B00001110:
+        adelante(250, 250, 50);
+        attack();
+      break;
 
-    case 0B00011111:
-      adelante(250, 250, 50);
-      attack();
-    break;
+      case 0B00011111:
+        adelante(250, 250, 50);
+        attack();
+      break;
 
-    case 0B00000100:
-      adelante(250, 250, 50);
-      attack();
-    break;
+      case 0B00000100:
+        adelante(250, 250, 50);
+        attack();
+      break;
 
-    default:
-    break;
+      default:
+      break;
     }*/
 
   }

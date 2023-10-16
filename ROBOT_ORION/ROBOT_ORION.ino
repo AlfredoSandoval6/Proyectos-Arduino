@@ -4,20 +4,33 @@
 #define PWML
 #define MOTR
 #define PWMR
-#define SENL
-#define SENR
+#define SFL
+#define SFR
 #define SPL
 #define SPR
-#define L_SL analogRead(SENL)
-#define _SR analogRead(SENR)
+#define L_SL analogRead(SFL)
+#define L_SR analogRead(SFR)
 #define L_SPL analogRead(SPL)
 #define L_SPR analogRead(SPR)
 #define ARRANCADOR
-#define LECT_ARR(state) (digitalRead(ARRANCADOR) == state)
+#define LECT_ARR(state) (digitalRead(ARRANCADOR) == (state))
+byte pins_sgy[2] = {};
+byte p_leds_sgy[2] = {};
+
+byte i, j;
+unsigned int l;
+int k;
 
 void setup(){
     pinMode(MOTL, OUTPUT);
     pinMode(MOTR, OUTPUT);
+    pinMode(ARRANCADOR, INPUT);
+    pinMode(pins_sgy[0], INPUT);
+    pinMode(pins_sgy[1], INPUT);
+    pinMode(p_leds_sgy[0], OUTPUT);
+    pinMode(p_leds_sgy[1], OUTPUT);
+
+    i = j = l = k = 0;
 }
 
 void loop(){
