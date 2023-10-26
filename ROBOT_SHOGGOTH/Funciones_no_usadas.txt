@@ -183,3 +183,8 @@ int P_R; //PISO DERECHO -> P_R =  analogRead(SEN_P_R);
 
 500 -> 417 -> 333 -> 250
 
+//Conteo de sensores; realmente no tuvieron utilidad y tampoco para adelante.
+
+#define NUM_SEN 5 //NÚMERO DE SENSORES FRONTALES
+#define NUM_SEN_P 2 //NÚMERO DE SENSORES DE PISO
+
