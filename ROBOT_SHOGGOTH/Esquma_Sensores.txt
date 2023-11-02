@@ -1,7 +1,0 @@
-[0] = Lateral Izquierdo
-[1] = Diagonal izquierdo
-[2] = Frontal
-[3] = Diagonal derecho
-[4] = Lateral derecho
-[5] = Sensor de piso izquierdo
-[6] = sensor de piso derecho
