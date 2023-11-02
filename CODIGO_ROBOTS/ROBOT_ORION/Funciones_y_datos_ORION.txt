@@ -1,0 +1,28 @@
+//Funciones y demás cosas desechadas; las guardo ya que dejan una referencia de la funcionalidad del robot.
+    DDRB = 0B00000001;
+    DDRD = 0B10011111;
+
+#define STBY 2 - PORTD, 2
+#define MOTLA 4 - PORTD, 4
+#define MOTLB 3 - PORTD, 3
+#define PWML 5 - PORTD, 5
+#define MOTRA 7 - PORTD, 7
+#define MOTRB 8 - PORTB, 0
+#define PWMR 6 - PORTD, 6
+#define ARRANCADOR 9 - PINB, 1
+const byte pins_sgy[2] = {10, 11}; - PINB = {2, 3}
+const byte p_leds_sgy[2] = {0, 1}; - PORTD = {0, 1}
+
+
+    pinMode(MOTLA, OUTPUT);
+    pinMode(MOTLB, OUTPUT);
+    pinMode(MOTRA, OUTPUT);
+    pinMode(MOTRB, OUTPUT);
+    pinMode(STBY, OUTPUT); digitalWrite(STBY, LOW);
+    digitalWrite(MOTLA, LOW); digitalWrite(MOTLB, LOW); analogWrite(PWML, 0);
+    digitalWrite(MOTRA, LOW); digitalWrite(MOTRB, LOW); analogWrite(PWMR, 0);
+    pinMode(ARRANCADOR, INPUT_PULLUP);
+    pinMode(pins_sgy[0], INPUT);
+    pinMode(pins_sgy[1], INPUT);
+    pinMode(p_leds_sgy[0], OUTPUT);
+    pinMode(p_leds_sgy[1], OUTPUT);

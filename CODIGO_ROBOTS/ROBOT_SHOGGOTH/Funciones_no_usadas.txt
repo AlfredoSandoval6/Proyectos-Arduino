@@ -1,0 +1,190 @@
+//Método de ataque (según)
+
+/*
+
+/*//metEsp
+int esp;
+int esp2;
+int esp3;*/
+
+void metAtk(){
+
+  if(esp2 == 0){
+
+    paro(1);
+    esp++;
+    
+    if(esp>500){
+      
+      esp3++;
+      esp = 0;
+      
+      } else{
+
+        adelante();
+        
+        }
+    
+    
+    }
+  
+  }
+
+*/
+
+//Análisis de sensores, caso por caso
+
+  switch (sensores){
+  
+  case 0B00000001: //LATERAL IZQUIERDO
+    izquierda();
+    attack();
+    break;
+  
+  case 0B00000011: //LATERAL Y DIAGONAL IZQUIERDO
+    izquierda();
+    attack();
+    break;
+  
+  case 0B00000111: //LATERAL Y DIAGONAL IZQUIERDO, Y FRONTAL
+    izquierda();
+    attack();
+    break;
+  
+  case 0B00000110: //DIAGONAL IZQUIERDO Y FRONTAL
+    izquierda();
+    attack();
+    break;
+  
+  case 0B00001100: //FRONTAL Y DIAGONAL DERECHO
+    izquierda();
+    attack();
+    break;
+  
+  case 0B00001110: //DIAGONAL IZQUIERDO, FRONTAL Y DIAGONAL DERECHO
+    adelante();
+    attack();
+    break;
+
+  case 0B00011100: //FRONTAL, DIAGONAL Y LATERAL DERECHO
+    derecha();
+    attack();
+
+  case 0B00011000: //DIAGONAL Y LATERAL DERECHO
+  derecha();
+  attack();
+  
+  case 0B00010000: //LATERAL DERECHO
+  derecha();
+  attack();
+
+  case 0B00100000:
+  atras();
+
+  case 0B01000000:
+  atras();
+
+  case 0B01100000:
+  atras();
+
+  default:
+    break;
+  
+  }
+
+
+//Detección de sensores
+
+  /*SENSORES DECLARADOS COMO ENTRADAS - NO ES NECESARIO YA QUE LOS PINES ANALÓGICOS SIEMPRE SON INPUTS
+  pinMode(SEN_L_L, INPUT);
+  pinMode(SEN_D_L, INPUT);
+  pinMode(SEN_F, INPUT);
+  pinMode(SEN_L_R, INPUT);
+  pinMode(SEN_D_R, INPUT);
+  pinMode(SEN_P_L, INPUT);
+  pinMode(SEN_P_R, INPUT);
+  */
+
+//Corrección de lectura
+
+  do{
+    if(bit_is_clear(sensores, i) && bit_is_clear(sensores, (i += 2))) sens_est[i - 1] = true;
+  } while(i < (NUM_SEN - 1));
+  i = 0;
+  if(bit_is_clear(sensores, i) && bit_is_clear(sensores, (i += 3))) sens_est[i - 1] = sens_est[i - 2] = true;
+  i = 5;
+  if(bit_is_clear(sensores, i) && bit_is_clear(sensores, (i -= 3))) sens_est[i + 1] = sens_est[i + 2] = true;
+
+//Mandato de ignorar lectura de sensores de piso si se detecta algo defrente; no tiene caso ya que a ese punto estamos fuera
+
+  do{
+
+    for(i = 0; i < 5; ++i){if(bit_is_set(sensores, i)){ j = 1; break;}}
+    if(j = 1){ i = 0; j = 0; break;}
+
+    if(sens_est[6] && sens_est[5]){
+      atras(); izquierda();
+    }
+
+    if(sens_est[6]){
+      atras(); izquierda();
+    }
+
+    if(sens_est[5]){
+      atras(); derecha();
+    }
+  
+  }while(sens_est[5] || sens_est[6]);
+
+//Vector booleano de banderas; no se usó debido a la redundancia y al costo de espacio en memoria y de ciclos de reloj
+
+bool sens_est[7]; //true or false - ÚLTIMO ESTADO GUARDADO EN LOS SENSORES
+
+//Inicializar vector en 0
+
+for(i = 0; i < 7; ++i) sens_est[i] = false;
+
+//Método para el análisis de posición respecto a las líneas. No fue útil y poco eficiente.
+
+
+  do{
+
+    if(bit_is_set(sensores, 5) && bit_is_set(sensores, 6)){
+      atras(); izquierda();
+    }
+
+    if(bit_is_set(sensores, 6)){
+      atras(); izquierda();
+    }
+
+    if(bit_is_set(sensores, 5)){
+      atras(); derecha();
+    }
+
+  }while(bit_is_set(sensores, 5) || bit_is_set(sensores, 6));
+
+
+//Variables ya no usadaas
+
+byte can_PWMR, can_PWRL, can_T
+
+//Variables para capturar cada lectura de los sensores; se prefirió definr macros (funciones en variables o
+//constantes simbólicas) ya que ahorran espacio en memoria y simplifican el código
+
+int LT_L; //LATERAL IZQUIERDO -> LT_L = analogRead(SEN_L_L);
+int LT_R; //LATERAL DERECHO ->  LT_R = analogRead(SEN_L_R);
+int FR; //FRONTAL ->  FR = analogRead(SEN_F);
+int DG_L; //DIAGONAL IZQUIERDO DG_L = analogRead(SEN_D_L);
+int DG_R; //DIAGONAL DERCHO DG_R =  analogRead(SEN_D_R);
+int P_L; //PISO IZQUIERDO ->  P_L = analogRead(SEN_P_L);
+int P_R; //PISO DERECHO -> P_R =  analogRead(SEN_P_R);
+
+//Tiempos de parpadeo de los leds indicadores de estrategias
+
+500 -> 417 -> 333 -> 250
+
+//Conteo de sensores; realmente no tuvieron utilidad y tampoco para adelante.
+
+#define NUM_SEN 5 //NÚMERO DE SENSORES FRONTALES
+#define NUM_SEN_P 2 //NÚMERO DE SENSORES DE PISO
+
