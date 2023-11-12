@@ -1,4 +1,5 @@
 //ROBOT IFIXOID
+#include "Servo.h"
 
 #define SFLL PIND, 1
 #define SFCL PIND, 1
@@ -10,15 +11,13 @@
 #define SP_L A1
 #define SP_R A2
 #define MOTL PORTD, 1
+#define MOTR PORTD, 1
 #define PWML 1
 #define PWMR 1
-#define MOTR PORTD, 1
 #define PIN_SGY_1 PIND, 1
 #define PIN_SGY_2 PIND, 1
 #define LED_SGY_1 PORTD, 0
 #define LED_SGY_2 PORTD, 1
-#define FLAGL PORTD, 1
-#define FLAGR PORTD, 1
 #define ARRANCADOR PINB, 1
 #define realFastRead(pin, numPin) (((pin) >> (numPin)) & 0x01)
 #define fastRead(pin_numPin) realFastRead(pin_numPin)
@@ -26,26 +25,26 @@
 #define fastWrite(port_numPin, val) realFastWrite(port_numPin, val)
 #define LECT_ARR(state) (fastRead(ARRANCADOR) == state)
 #define ACT_ARR(state) if(LECT_ARR(state)){\
-            if(!state) paro(1); return;\
+            if(!state){paro(1); banderaL.write(0); banderaR.write(90);}; return;\
 /**//**/}
 #define espera(caso, state, timeLapse) {\
             int beginMillis = millis();\
             if(caso){\
                 do{\
                     ACT_ARR(state)\
-                }while((beginMillis - millis()) <= timeLapse);\
+                }while((millis() - beginMillis) <= timeLapse);\
             } else{\
                 do{\
                     ACT_ARR(state)\
                     lectura();\
-                if(sens) return;\
-                }while((beginMillis - millis()) <= timeLapse);\
+                    if(sens) return;\
+                }while((millis() - beginMillis) <= timeLapse);\
             }\
 /**//**/}
 //NOTA: SIENDO QUE ESTA FUNCIÓN ACABA CON UN IF, PUEDE SER CONTINUADA CON UN ELSE. OTROS MÉTODOS SERÁN FACTIBLES.
 #define SEARCH_AND_FLOOR_DODGE lectura(); if(sens == 0) busqueda(); ACT_ARR(LOW)\
         if(bitRead(sens, 7) || bitRead(sens, 8)){\
-            atras(120);\
+            atras(255, 255, 120);\
             if(bitRead(sens, 7) && bitRead(sens, 8)){\
                 izquierda(false, 240, 240, 120);\
             } else{\
@@ -58,9 +57,10 @@
             }\
 /**//**/}
 
-int sens; 
+int sens;
 byte sgy;
 bool izq = false, der = false;
+Servo banderaL, banderaR;
 
 void secLeds(void);
 void lectura(void);
@@ -73,7 +73,7 @@ void sgy4(void);
 void izquierda(bool caso, byte PWMI, byte PWMD, int T);
 void derecha(bool caso, byte PWMI, byte PWMD, int T);
 void adelante(bool caso, byte PWMI, byte PWMD, int T);
-void atras(int T);
+void atras(byte PWMI, byte PWMD, int T);
 void paro(int T);
 
 void setup(){
@@ -81,14 +81,19 @@ void setup(){
     DDRD;
     paro(1);
     delay(3000);
+    //BANDERAS ORIGINALMENTE CERRADAS
+    banderaL.attach(10); banderaR.attach(9);
+    banderaL.write(0); banderaR.write(90);
 
     sens = sgy = 0;
 }
 
 void loop(){
-    secLeds();
+    while(1){
+        secLeds();
 
-    if(LECT_ARR(HIGH)) estrategia();
+        if(LECT_ARR(HIGH)) estrategia();
+    }
 }
 
 void secLeds(void){
@@ -143,25 +148,26 @@ void lectura(void){
 }
 
 void estrategia(void){
+    lectura();
+    //BANDERAS ABIERTAS
+    banderaL.write(90);
+    banderaR.write(0);
+
     switch(sgy){
         case 0B00000000:
-            //MOVIMIENTO INCIAL DE SGY1
-            do{sgy1();}while(LECT_ARR(HIGH));
+            sgy1();
         break;
 
-        case 0B00000001:
-            //MOVIMIENTO INCIAL DE SGY2
-            do{sgy2();}while(LECT_ARR(HIGH));
+        case 0B00000001:        
+            sgy2();
         break;
 
         case 0B00000010:
-            //MOVIMIENTO INCIAL DE SGY3
-            do{sgy3();}while(LECT_ARR(HIGH));
+            sgy3();
         break;
 
         case 0B00000011:
-            //MOVIMIENTO INCIAL DE SGY4
-            do{sgy4();}while(LECT_ARR(HIGH));
+            sgy4();
         break;
 
         default:
@@ -170,37 +176,56 @@ void estrategia(void){
 }
 
 void sgy1(void){
-    SEARCH_AND_FLOOR_DODGE
-    else{
+    if(bitRead(sens, 0)) atras(186, 248, 120);
+    else if(bitRead(sens, 6)) atras(248, 186, 120);
 
-    }
+    do{
+        SEARCH_AND_FLOOR_DODGE
+        else{
+
+        }
+    }while(LECT_ARR(HIGH));
 }
 
 void sgy2(void){
-    SEARCH_AND_FLOOR_DODGE
-    else{
-        
-    }
+    adelante(true, 31, 248, 120);
+
+    do{
+        SEARCH_AND_FLOOR_DODGE
+        else{
+
+        }
+    }while(LECT_ARR(HIGH));
 }
 
 void sgy3(void){
-    SEARCH_AND_FLOOR_DODGE
-    else{
-        
-    }
+    derecha(true, 248, 248, 30);
+    adelante(false, 248, 248, 200);
+    izquierda(false, 248, 248, 200);
+
+    do{
+        SEARCH_AND_FLOOR_DODGE
+        else{
+
+        }
+    }while(LECT_ARR(HIGH));
 }
 
 void sgy4(void){
-    SEARCH_AND_FLOOR_DODGE
-    else{
-        
-    }
+    atras(248, 248, 300);
+
+    do{
+        SEARCH_AND_FLOOR_DODGE
+        else{
+
+        }
+    }while(LECT_ARR(HIGH));
 }
 
 void busqueda(void){
     if(izq || der){
         if(izq) izquierda(false, 240, 240, 150);
-        if(der) derecha(false, 240, 240, 150);
+        else if(der) derecha(false, 240, 240, 150);
         izq = der = false;
     }
 
@@ -237,11 +262,11 @@ void adelante(bool caso, byte PWMI, byte PWMD, int T){
     espera(caso, LOW, T);
 }
 
-void atras(int T){
+void atras(byte PWMI, byte PWMD, int T){
     fastWrite(MOTL, LOW);
-    analogWrite(PWML, 255);
+    analogWrite(PWML,PWMI);
     fastWrite(MOTR, LOW);
-    analogWrite(PWMR, 255);
+    analogWrite(PWMR, PWMD);
     espera(true, LOW, T);
 }
 

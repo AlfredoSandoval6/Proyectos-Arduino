@@ -1,4 +1,4 @@
-//ROBOT ORION - MACRODEV
+//ROBOT ORION - MACRODEV (DESCONTINUADO).
 
 #define STBY 2
 #define MOTLA 4
@@ -29,7 +29,7 @@
 #define fastRead(pin, numPin) (((pin) >> (numPin)) & 0x01)
 #define fastWrite(port, numPin, val) ((val) ? bitSet(port, numPin) : bitClear(port, numPin))
 #define LECT_ARR(state) (fastRead(PORTB, ARRANCADOR) == state)
-#define ACT_ARR(state) if(LECT_ARR(state)){fastWrite(PIND, STBY, state); if(!state){paro(1);} return;}
+#define ACT_ARR(state) if(LECT_ARR(state)){fastWrite(PIND, STBY, state); if(!state) paro(1); return;}
 byte sens, sgy;
 bool izq = false, der = false;
 byte i, j;

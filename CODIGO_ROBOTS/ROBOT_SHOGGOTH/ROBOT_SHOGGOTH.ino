@@ -1,18 +1,18 @@
-//ROBOT SHOGGOTH
+//ROBOT SHOGGOTH (DESCONTINUADO)
 
 ////CONSTANTES
 #define RAN_SEN 250 //RANGO DE LOS SENSORES FRONTALES
-#define RAN_SEN_P 880 //RANGO DE LOS SENSORES DE PISO
+#define RAN_SEN_P 700 //RANGO DE LOS SENSORES DE PISO
 
 ////ENTRADAS
-/*#define SEN_L_L A0 //SENSOR LATERAL IZQUIERDO - ENTRADA A0
-#define SEN_D_L A1 //SENSOR DIAGONAL IZQUIERDO - ENTRADA A1
-#define SEN_F A2 //SENSOR FORNTAL - ENTRADA A2
-#define SEN_D_R A3 //SENSOR DIAGONAL DERECHO - ENTRADA A3
-#define SEN_L_R A4 //SENSOR LATERAL DERECHO - ENTRADA A4*/
-#define SEN_P_L A1 //SENSOR DE PISO IZQUIERDO - ENTRADA A1
-#define SEN_P_R A2 //SENSOR DE PISO DERECHO - ENTRADA A2
-#define ACTIVADOR 12 //NÚMERO DE PIN ESTABLECIDO PARA EL ACTIVADOR
+#define SEN_L_L 18 //SENSOR LATERAL IZQUIERDO - ENTRADA D18
+#define SEN_D_L 16 //SENSOR DIAGONAL IZQUIERDO - ENTRADA D16
+#define SEN_F 15 //SENSOR FORNTAL - ENTRADA D15
+#define SEN_D_R 14 //SENSOR DIAGONAL DERECHO - ENTRADA D14
+#define SEN_L_R 11 //SENSOR LATERAL DERECHO - ENTRADA D11
+#define SEN_P_L A3 //SENSOR DE PISO IZQUIERDO - ENTRADA A3
+#define SEN_P_R A7 //SENSOR DE PISO DERECHO - ENTRADA A7
+#define ARRANCADOR 12 //NÚMERO DE PIN ESTABLECIDO PARA EL ARRANCADOR
 
 ////SALIDAS - MOTORES <1 SENTIDO HORARIO - 0 SENTIDO ANTIHORARIO>
 #define DIRL 4 //MOTOR IZQUIERDO
@@ -22,16 +22,16 @@
 
 ////VARIABLES
 //SENSORES
-/*#define LT_L analogRead(SEN_L_L) //LATERAL IZQUIERDO
-#define LT_R analogRead(SEN_L_R) //LATERAL DERECHO
-#define FR analogRead(SEN_F) //FRONTAL
-#define DG_L analogRead(SEN_D_L) //DIAGONAL IZQUIERDO
-#define DG_R analogRead(SEN_D_R) //DIAGONAL DERCHO*/
+#define LT_L digitalRead(SEN_L_L) //LATERAL IZQUIERDO
+#define LT_R digitalRead(SEN_L_R) //LATERAL DERECHO
+#define FR digitalRead(SEN_F) //FRONTAL
+#define DG_L digitalRead(SEN_D_L) //DIAGONAL IZQUIERDO
+#define DG_R digitalRead(SEN_D_R) //DIAGONAL DERCHO
 #define P_L analogRead(SEN_P_L) //PISO IZQUIERDO
 #define P_R analogRead(SEN_P_R) //PISO DERECHO
-#define LECT_ACT(state) (digitalRead(ACTIVADOR) == (state)) //LECTURA DEL ACTIVADOR, DA 0 O 1 ACUERDO AL ESTADO
-int estrategia[2] = {2, 7}; //PINES DE ESTRATEGIA
-int sgy_leds[2] = {0, 1}; //PINES DE LEDS DE ESTRATEGIA
+#define LECT_ARR(state) (digitalRead(ARRANCADOR) == (state)) //LECTURA DEL ARRANCADOR, DA 0 O 1 ACUERDO AL ESTADO
+const int estrategia[2] = {2, 7}; //PINES DE ESTRATEGIA
+const int sgy_leds[2] = {0, 1}; //PINES DE LEDS DE ESTRATEGIA
 int der = false, izq = false; //ÚLTIMA POSICIÓN REGISTRADA, DE IZQUIERDA Ó DERECHA
 byte sgy; //ALMACENAMIENTO DE LA ESTRATEGIA SELECCIONADA
 
@@ -42,11 +42,11 @@ byte sensores; //0B00000000
 byte i, j, k;
 
 ////PROTOTIPO DE FUNCIONES
-void secuenciaLeds(); //SECUENCIA DE LEDS POR ESTRATEGIA CON INTERRUPCIÓN DE ACTIVADOR
-void espera(bool caso, int T); //MÉTODO DE DELAY CON INTERRUPCIÓN DE ACTIVADOR Y/O SENSORES
+void secuenciaLeds(); //SECUENCIA DE LEDS POR ESTRATEGIA CON INTERRUPCIÓN DE ARRANCADOR
+void espera(bool caso, int T); //MÉTODO DE DELAY CON INTERRUPCIÓN DE ARRANCADOR Y/O SENSORES
 void lectura(); //LECTURA DE SENSORES
 void rutina(); //ESTRATEGIA A UTILIZAR EN EL ARRANQUE, Y LUEGO BUSCAR AL CONTRINCANTE
-void posAnalisis(); //ANALISAR LA POSICIÓN DEL CONTRINCANTE PARA SABER CÓMO Y A DÓNDE MOVERSE
+void posAnalisis(); //ANALIZAR LA POSICIÓN DEL CONTRINCANTE PARA SABER CÓMO Y A DÓNDE MOVERSE
 void busqueda(); //BÚSQUEDA DEL CONTRINCANTE SI NO SE DETECTA EN LOS SENSORES FRONTALES
 void attack(); //MÉTODO DE ATAQUE CUANDO SE TENGA AL CONTRINCANTE EN LOS SENSORES FRONTALES
 void paro(int T); //FUNCIÓN (MÉTODO) PARA EL PARO
@@ -62,8 +62,13 @@ void setup() {
   pinMode(DIRR, OUTPUT);
   paro(1);
 
-  //PIN DEL ACTIVADOR DECLARADO COMO ENTRADA
-  pinMode(ACTIVADOR, INPUT);
+  //PIN DEL ARRANCADOR Y SENSORES DECLARADO COMO ENTRADA
+  pinMode(ARRANCADOR, INPUT);
+  pinMode(SEN_L_L, INPUT);
+  pinMode(SEN_D_L, INPUT);
+  pinMode(SEN_F, INPUT);
+  pinMode(SEN_D_R, INPUT);
+  pinMode(SEN_L_R, INPUT);
 
   //PINES DE ESTRATEGIA DECLARADOS COMO ENTRADAS
   pinMode(estrategia[0], INPUT);
@@ -85,10 +90,10 @@ void loop() {
 
   do{
     secuenciaLeds();
-  }while(LECT_ACT(LOW));
+  }while(0);
 
   delay(500);
-  if(LECT_ACT(HIGH)){i = j = 0; rutina();}
+  if(1){i = j = 0; rutina();}
 
 }
 
@@ -99,29 +104,29 @@ void secuenciaLeds(){
 
   if((i == LOW) && (j == LOW)){
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
-    for(int l = 0; l <= 500; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
+    for(int l = 0; l <= 500; ++l){if(LECT_ARR(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 500; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
+    for(int l = 0; l <= 500; ++l){if(LECT_ARR(HIGH)) return; delay(1);}
     sgy = 0B00000001;
   } else if((i == LOW) && (j == HIGH)){
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 400; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
+    for(int l = 0; l <= 400; ++l){if(LECT_ARR(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], HIGH);
-    for(int l = 0; l <= 400; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
+    for(int l = 0; l <= 400; ++l){if(LECT_ARR(HIGH)) return; delay(1);}
     sgy = 0B00000010;
   } else if((i == HIGH) && (j == LOW)){
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 300; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
+    for(int l = 0; l <= 300; ++l){if(LECT_ARR(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
-    for(int l = 0; l <= 300; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
+    for(int l = 0; l <= 300; ++l){if(LECT_ARR(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 300; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
+    for(int l = 0; l <= 300; ++l){if(LECT_ARR(HIGH)) return; delay(1);}
     sgy = 0B00000100;
   } else if((i == HIGH) && (j == HIGH)){
     digitalWrite(sgy_leds[0], HIGH); digitalWrite(sgy_leds[1], HIGH);
-    for(int l = 0; l <= 250; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
+    for(int l = 0; l <= 250; ++l){if(LECT_ARR(HIGH)) return; delay(1);}
     digitalWrite(sgy_leds[0], LOW); digitalWrite(sgy_leds[1], LOW);
-    for(int l = 0; l <= 250; ++l){if(LECT_ACT(HIGH)) return; delay(1);}
+    for(int l = 0; l <= 250; ++l){if(LECT_ARR(HIGH)) return; delay(1);}
     sgy = 0B00001000;
   }
 
@@ -130,22 +135,22 @@ void secuenciaLeds(){
 void espera(bool caso, int T){
   if(caso){
     for(int l = 0; l <= T; ++l){
-      if(LECT_ACT(LOW)){paro(1); return;} delay(1);
+      if(LECT_ARR(LOW)){paro(1); return;} delay(1);
     }
   } else{
     for(int l = 0; l <= T; ++l){
-      lectura(); if(LECT_ACT(LOW)){paro(1); return;} if(sensores != 0) return; delay(1);
+      lectura(); if(LECT_ARR(LOW)){paro(1); return;} if(sensores != 0) return; delay(1);
     }
   }
 }
 
 void lectura(){
 
-  /*if(LT_L > RAN_SEN){sensores |= (1 << 0);} else{sensores &= ~ (1 << 0);}
-  if(LT_R > RAN_SEN){sensores |= (1 << 1);} else{sensores &= ~ (1 << 1);}
-  if(FR > RAN_SEN){sensores |= (1 << 2);} else{sensores &= ~ (1 << 2);}
-  if(DG_L > RAN_SEN){sensores |= (1 << 3);} else{sensores &= ~ (1 << 3);}
-  if(DG_R > RAN_SEN){sensores |= (1 << 4);} else{sensores &= ~ (1 << 4);}*/
+  if(LT_L){sensores |= (1 << 0);} else{sensores &= ~ (1 << 0);}
+  if(LT_R){sensores |= (1 << 1);} else{sensores &= ~ (1 << 1);}
+  if(FR){sensores |= (1 << 2);} else{sensores &= ~ (1 << 2);}
+  if(DG_L){sensores |= (1 << 3);} else{sensores &= ~ (1 << 3);}
+  if(DG_R){sensores |= (1 << 4);} else{sensores &= ~ (1 << 4);}
   if(P_L < RAN_SEN_P){sensores |= (1 << 5);} else{sensores &= ~ (1 << 5);}
   if(P_R < RAN_SEN_P){sensores |= (1 << 6);} else{sensores &= ~ (1 << 6);}
 
@@ -180,7 +185,7 @@ void rutina(){
 
   do{
     posAnalisis();
-  }while(LECT_ACT(HIGH));
+  }while(LECT_ARR(HIGH));
 
 }
 
@@ -189,7 +194,7 @@ void posAnalisis(){
   lectura();
 
   if(sensores == 0) busqueda();
-  if(LECT_ACT(LOW)) return;
+  if(0) return;
 
   if(bitRead(sensores, 5) || bitRead(sensores, 6)){
 
@@ -210,7 +215,7 @@ void posAnalisis(){
     paro(1);
     espera(false, 249);
 
-  } else{/*
+  } else{
 
     if(bitRead(sensores, 0)){
       if(bitRead(sensores, 1)){
@@ -218,40 +223,42 @@ void posAnalisis(){
           if(bitRead(sensores, 3)){
             if(bitRead(sensores, 4)){
               adelante(250, 250, 20); attack(); return;
-            } else{izquierda(); return;}
-          } else{izquierda(); return;}
-        } else{izquierda(); return;}
-      } else{ izquierda(); return;}
-    }
-
-    if(bitRead(sensores, 4)){
+            } else{izquierda(250, 250, 27); return;}
+          } else{izquierda(250, 250, 29); return;}
+        } else{izquierda(250, 250, 36); return;}
+      } else{ izquierda(250, 250, 55); return;}
+    } else if(bitRead(sensores, 4)){
       if(bitRead(sensores, 3)){
         if(bitRead(sensores, 2)){
           if(bitRead(sensores, 1)){
-            derecha(); return;
-          } else{derecha(); return;}
-        } else{derecha(); return;}
-      } else{derecha(); return;}
+            derecha(250, 250, 27); return;
+          } else{derecha(250, 250, 29); return;}
+        } else{derecha(250, 250, 36); return;}
+      } else{derecha(250, 250, 55); return;}
+    } else{
+
+      switch(sensores){
+
+        case 0B00000010:
+          izquierda(250, 250, 8); return;
+        break;
+
+        case 0B00001000:
+          derecha(250, 250, 8); return;
+        break;
+
+      }
+
     }
 
-    switch(sensores){
-
-      case 0B00000010:
-        izquierda(); return;
-      break;
-
-      case 0B00001000:
-        derecha(); return;
-      break;
-
-    }
+    lectura();
 
     if(bitRead(sensores, 2)){
       if(bitRead(sensores, 1)){
         if(bitRead(sensores, 3)){
-          adelante(250, 250, 10); attack(); return;
-        } else if(bitRead(sensores, 0)){izquierda(); return;} else{izquierda(); return;}
-      } else if(bitRead(sensores, 3)){derecha(); return;} else{adelante(); attack(); return;}
+          adelante(250, 250 , 10); attack(); return;
+        } else if(bitRead(sensores, 0)){izquierda(250, 250, 29); return;} else{izquierda(250, 250, 3); return;}
+      } else if(bitRead(sensores, 3)){derecha(250, 250, 5); return;} else{adelante(250, 250, 3); attack(); return;}
     }
 
     switch(sensores){
@@ -273,7 +280,7 @@ void posAnalisis(){
 
       default:
       break;
-    }*/
+    }
 
   }
 
@@ -281,7 +288,7 @@ void posAnalisis(){
 
 void busqueda(){
   if(izq || der){
-    if(LECT_ACT(LOW)) return;
+    if(LECT_ARR(LOW)) return;
     if(izq){
     digitalWrite(DIRL, LOW); analogWrite(PWML, 240);
     digitalWrite(DIRR, HIGH); analogWrite(PWMR, 240);
@@ -296,7 +303,7 @@ void busqueda(){
   }
   lectura();
   while(sensores == 0){
-    if(LECT_ACT(LOW)) break;
+    if(LECT_ARR(LOW)) break;
     adelante(24, 30, 2);
     lectura();
   }

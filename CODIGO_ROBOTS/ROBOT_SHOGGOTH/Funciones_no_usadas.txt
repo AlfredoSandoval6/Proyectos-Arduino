@@ -188,3 +188,16 @@ int P_R; //PISO DERECHO -> P_R =  analogRead(SEN_P_R);
 #define NUM_SEN 5 //NÚMERO DE SENSORES FRONTALES
 #define NUM_SEN_P 2 //NÚMERO DE SENSORES DE PISO
 
+
+//Función cuadrática para calcular los grados con respecto al delay puesto. Las pruebas se hicieron en PRUEBA_GIROS.ino
+
+x | y
+----  | ----
+0 | 0
+27  | 45
+55  | 90
+130 | 180
+
+Función obtenida de la regresión cuadrática:
+
+-0.42726403974 + 1.80906451109x + -0.0032348513697715298x^2
