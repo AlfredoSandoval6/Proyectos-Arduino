@@ -27,7 +27,7 @@
 #define ACT_ARR(state) if(LECT_ARR(state)){\
             if(!state){paro(1); banderaL.write(0); banderaR.write(90);}; return;\
 /**//**/}
-#define espera(caso, state, timeLapse) {\
+#define espera(caso, state, timeLapse){\
             int beginMillis = millis();\
             if(caso){\
                 do{\
