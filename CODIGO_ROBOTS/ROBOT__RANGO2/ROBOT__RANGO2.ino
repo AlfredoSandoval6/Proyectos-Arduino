@@ -1,12 +1,15 @@
+#include "FastLED.h"
+#include "Servo.h"
+
 #define MOTL 4
 #define PWML 6
 #define MOTR 3
 #define PWMR 5
 
-#define SENLL 19
-#define SENL 18
-#define SENF 17
-#define SENR 16
+#define SENLL 16
+#define SENL 19
+#define SENF 18
+#define SENR 17
 #define SENLR 15
 #define SENPL A7
 #define SENPR A6
@@ -15,13 +18,32 @@
 #define PSGY1 8
 #define PSGY2 7
 
-#define KP 12
-#define KD 10
+#define KP 14
+#define KD 12
+#define KI 0.0066667 //0.005
 #define SETPOINT 30
 #define MAX_SPEED 250
 #define NO_SPEED 0
 
-byte vSteARR = 0;
+
+enum FLAG_SENS{
+	IS_LEFT = 0,
+	IS_FRONT,
+	IS_RIGHT,
+	IS_FLAN
+};
+
+#define NUM_LEDS 2
+#define DATA_PIN 9
+#define CLOCK_PIN 13
+#define LED_TYPE NEOPIXEL
+CRGB leds[NUM_LEDS];
+/// @brief 
+static uint8_t hue = 0;
+
+Servo flag;
+
+volatile byte vSteARR = 0;
 byte sens = 0;
 byte ste = 0;
 
@@ -45,21 +67,33 @@ void setup(){
 
     pinMode(MOTL, OUTPUT); pinMode(MOTR, OUTPUT);
     pinMode(SENLL, INPUT); pinMode(SENL, INPUT); pinMode(SENF, INPUT); pinMode(SENLR, INPUT); pinMode(SENR, INPUT);
-    pinMode(ARR, INPUT);
+    pinMode(ARR, INPUT); pinMode(PSGY1, INPUT); pinMode(PSGY2, INPUT);
     digitalWrite(MOTL, LOW); digitalWrite(MOTR, LOW);
     analogWrite(PWML, 0); analogWrite(PWMR, 0);
-    //Serial.begin(9600);
+    Serial.begin(115200);
+    attachInterrupt(digitalPinToInterrupt(ARR), cSteARR, CHANGE);
+
+    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+    flag.attach(10);
 
 }
 
+void fadeall(){for(int i = 0; i < NUM_LEDS; i++){leds[i].nscale8(250);}}
+
 void loop(){
 
-    if(digitalRead(ARR)) selSgy();
-
-    if(!digitalRead(ARR)){
+    if(vSteARR){
+        flag.write(90);
+        selSgy();
         paro(0);
+        flag.write(0);
+
     }
 
+}
+
+void cSteARR(){
+    vSteARR = !vSteARR;
 }
 
 void lectura(){
@@ -78,15 +112,14 @@ void selSgy(){
 
     byte sgy = 0;
 
-    (digitalRead(PSGY1)) ? (sgy |= (1 << 0)) : (sgy &= ~(1 << 0));
-    (digitalRead(PSGY2)) ? (sgy |= (1 << 1)) : (sgy &= ~(1 << 1));
+    if(digitalRead(PSGY1)) (sgy |= (1 << 0));
+    if(digitalRead(PSGY2)) (sgy |= (1 << 1));
 
     (*SGTY[sgy])();
 
-    while(digitalRead(ARR)) posAnalisis();
+    posAnalisis();
 
 }
-
 
 void sgy1(){
 
@@ -99,7 +132,7 @@ void sgy2(){
     adelante(87, 50, 0);
     do{
         lectura();
-        if(sens || (!digitalRead(ARR))) return;
+        if(sens || (!vSteARR)) return;
     }while((millis() - taim) <= 500);
 
 }
@@ -111,7 +144,7 @@ void sgy3(){
     adelante(50, 87, 0);
     do{
         lectura();
-        if(sens || (!digitalRead(ARR))) return;
+        if(sens || (!vSteARR)) return;
     }while((millis() - taim) <= 500);
 
 }
@@ -123,80 +156,114 @@ void sgy4(){
     adelante(25, 25, 0);
     do{
         lectura();
-        if(sens || (!digitalRead(ARR))) return;
+        if(sens || (!vSteARR)) return;
     }while((millis() - taim) <= 500);
     
 }
 
 void posAnalisis(){
 
-    lectura();
-    if(!sens) bus_leo();
 
-    if(bitRead(sens, 5) || bitRead(sens, 6)){
-        if(bitRead(sens, 5) && bitRead(sens, 6)){
-            atras(MAX_SPEED, MAX_SPEED, 75);
-            izquierda(240, 240, 100);
-        } else{
-            if(bitRead(sens, 5)){
-                atras(MAX_SPEED, MAX_SPEED, 75);
-                izquierda(240, 240, 75);
-            } else if(bitRead(sens, 6)){
-                atras(MAX_SPEED, MAX_SPEED, 75);
-                derecha(240, 240, 75);
-            }
-        }
-        
-    } else if(sens & 0B00011111) control();
+	static uint8_t antSens = 0;
+
+	while(vSteARR){
+
+        lectura();
+
+		if(sens & 0B01100000){
+			if(sens == 0B01100000){
+				atras(180, 180, 90);
+			} else if(sens == 0B00100000){
+				atras(180, 180, 90);
+				izquierda(180, 180, 90);
+			} else if(sens == 0B01000000){
+				atras(180, 180, 90);
+				derecha(180, 180, 90);
+			}
+			antSens = 0;
+			lectura();
+		}
+
+		if((!sens) && antSens){
+
+			uint8_t blockA = 0, blockB = 0, blockF;
+
+			blockA += (((antSens >> 4) & 1U) * 2) + ((antSens >> 3) & 1U);
+			blockB += ((antSens >> 1) & 1U) + (((antSens >> 0) & 1U) * 2);
+			blockF += ((antSens >> 2) & 1U);
+
+			if(blockA > blockB) bus_leo(IS_RIGHT);
+			else if(blockA < blockB) bus_leo(IS_LEFT);
+			else if(((blockA == blockB) && blockA) || blockF) bus_leo(IS_FRONT);
+
+		} else if(!sens) bus_leo(IS_FLAN);
+
+		antSens = (sens & 0B00011111);
+
+		if(sens & 0B00011111) control();
+
+	}
 
 }
 
-void bus_leo(){
+void bus_leo(byte goFind){
+	if(goFind != IS_FLAN){
+		if(goFind == IS_LEFT) izquierda(180, 180, 0);
+		else if(goFind == IS_FRONT) adelante(180, 180, 0);
+		else if(goFind == IS_RIGHT) derecha(180, 180, 0);
 
-    unsigned long taim = millis();
+		uint32_t taim = millis();
+		do{
+			lectura();
+			if((sens) || (!vSteARR)) return;
+		}while((millis() - taim) <= 180);
 
-    adelante(150, 150, 0);
-    do{
-        lectura();
-        if(sens || (!digitalRead(ARR))) return;
-    }while((millis() - taim) <= 100);
-
-    taim = millis();
-    paro(0);
-    do{
-        lectura();
-        if(sens || (!digitalRead(ARR))) return;
-    }while((millis() - taim) <= 1000);
-
+	} else{
+		adelante(50, 50, 0);
+		do{
+			lectura();
+			if(sens) return;
+		}while(vSteARR);
+	}
 }
 
 void control(){
-    //Serial.println(F("CONTROL"));
-    static int ultEntrada;
-    int posicion = ponderacion();
-    if(!sens || (!digitalRead(ARR))) return;
-    int error = SETPOINT - posicion;
-    int dEntrada = posicion - ultEntrada;
 
-    int salida = (error * KP) - (dEntrada * KD);
+    static int ultEntrada = 0;
+    static float ITerm = 0;
 
-    if(salida > MAX_SPEED) salida = MAX_SPEED;
-    else if(salida < -MAX_SPEED) salida = -MAX_SPEED;
-    //Serial.println(salida);
-    if(salida < 0){
-        salida *= -1;
-        //izquierda(salida, 0, 2);
-        izquierda(salida, salida, 2);
-        //adelante(salida, 0, 2);
-    } else if(!salida){
-        adelante(MAX_SPEED, MAX_SPEED, 2);
-    } else if(salida > 0){
-        //derecha(0, salida, 2);
-        derecha(salida, salida, 2);
-        //adelante(0, salida, 2);
-    }
+    do{
 
-    ultEntrada = posicion;
+        int posicion = ponderacion();
+        if((!sens) || (!vSteARR)) return;
+        int error = SETPOINT - posicion;
+        ITerm += (error * KI);
+
+        if(!error) ITerm = 0;
+
+        if(ITerm > MAX_SPEED) ITerm = MAX_SPEED;
+        else if(ITerm < -MAX_SPEED) ITerm = -MAX_SPEED;
+        int dEntrada = posicion - ultEntrada;
+
+        int salida = (error * KP) + ((int) (ITerm)) - (dEntrada * KD);
+
+        if(salida > MAX_SPEED) salida = MAX_SPEED;
+        else if(salida < -MAX_SPEED) salida = -MAX_SPEED;
+        if(salida < 0){
+            salida *= -1;
+            izquierda(salida, salida, 2);
+        } else if(!salida){
+            adelante(MAX_SPEED, MAX_SPEED, 2);
+        } else if(salida > 0){
+            derecha(salida, salida, 2);
+        }
+
+        ultEntrada = posicion;
+
+    }while(sens & 0B00011111);
+
+    ITerm = 0;
+    ultEntrada = 0;
 
 }
 
@@ -206,8 +273,8 @@ int ponderacion(){
     lectura();
     //Serial.println(sens);
     if(!sens){
-      paro(0);
-      return 0;
+        paro(0);
+        return 0;
     }
 
     for(byte i = 0; i < NUM_S; ++i){
@@ -220,7 +287,7 @@ int ponderacion(){
     amnt_det /= n_det;
     //Serial.print(amnt_det);
     //Serial.print("\t");
-  return amnt_det;
+    return amnt_det;
 }
 
 void izquierda(byte PWMI, byte PWMD, int T){
@@ -229,7 +296,13 @@ void izquierda(byte PWMI, byte PWMD, int T){
     digitalWrite(MOTR, HIGH);
     analogWrite(PWML, PWMI);
     analogWrite(PWMR, PWMD);
-    delay(T);
+    leds[0] = CRGB::Blue;
+    FastLED.show();
+    if(!T) return;
+    unsigned long taim = millis();
+    do{
+        if(!vSteARR){paro(0); return;}
+    }while((millis() - taim) <= T);
 
 }
 
@@ -239,7 +312,13 @@ void derecha(byte PWMI, byte PWMD, int T){
     digitalWrite(MOTR, LOW);
     analogWrite(PWML, PWMI);
     analogWrite(PWMR, PWMD);
-    delay(T);
+    leds[0] = CRGB::Green;
+    FastLED.show();
+    if(!T) return;
+    unsigned long taim = millis();
+    do{
+        if(!vSteARR){paro(0); return;}
+    }while((millis() - taim) <= T);
 
 }
 
@@ -249,7 +328,13 @@ void adelante(byte PWMI, byte PWMD, int T){
     digitalWrite(MOTR, HIGH);
     analogWrite(PWML, PWMI);
     analogWrite(PWMR, PWMD);
-    delay(T);
+    leds[0] = CRGB::Red;
+    FastLED.show();
+    if(!T) return;
+    unsigned long taim = millis();
+    do{
+        if(!vSteARR){paro(0); return;}
+    }while((millis() - taim) <= T);
 
 }
 
@@ -259,7 +344,11 @@ void atras(byte PWMI, byte PWMD, int T){
     digitalWrite(MOTR, LOW);
     analogWrite(PWML, PWMI);
     analogWrite(PWMR, PWMD);
-    delay(T);
+    if(!T) return;
+    unsigned long taim = millis();
+    do{
+        if(!vSteARR){paro(0); return;}
+    }while((millis() - taim) <= T);
 
 }
 
@@ -269,6 +358,9 @@ void paro(int T){
     digitalWrite(MOTR, LOW);
     analogWrite(PWML, 0);
     analogWrite(PWMR, 0);
+    leds[0] = CRGB::Purple;
+    FastLED.show();
+    if(!T) return;
     delay(T);
 
 }
